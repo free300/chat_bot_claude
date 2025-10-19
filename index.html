@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot Pro - Multi AI Support</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; color: #fff; padding: 10px; }
+        .chat-container { width: 100%; max-width: 900px; height: 95vh; background: rgba(30, 30, 46, 0.95); border-radius: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; overflow: hidden; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .chat-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        .chat-header h1 { font-size: 22px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .ai-selector { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .ai-option { padding: 8px 16px; background: rgba(255, 255, 255, 0.2); border: 2px solid transparent; border-radius: 20px; cursor: pointer; transition: all 0.3s; font-size: 13px; font-weight: 500; }
+        .ai-option:hover { background: rgba(255, 255, 255, 0.3); }
+        .ai-option.active { background: rgba(255, 255, 255, 0.95); color: #667eea; border-color: white; }
+        .status { font-size: 12px; opacity: 0.9; display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .status-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .chat-messages::-webkit-scrollbar { width: 8px; }
+        .chat-messages::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.5); border-radius: 10px; }
+        .message { display: flex; gap: 12px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { flex-direction: row-reverse; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 20px; }
+        .avatar.user { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .avatar.bot { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .message-content { max-width: 70%; padding: 15px 18px; border-radius: 18px; line-height: 1.6; word-wrap: break-word; }
+        .message.user .message-content { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom-right-radius: 4px; }
+        .message.bot .message-content { background: rgba(255, 255, 255, 0.1); border-bottom-left-radius: 4px; }
+        .timestamp { font-size: 11px; opacity: 0.6; margin-top: 5px; }
+        .ai-badge { display: inline-block; padding: 3px 8px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; font-size: 10px; margin-bottom: 5px; }
+        .typing-indicator { display: none; align-items: center; gap: 12px; padding: 0 20px; }
+        .typing-indicator.active { display: flex; }
+        .typing-dots { display: flex; gap: 5px; padding: 15px 18px; background: rgba(255, 255, 255, 0.1); border-radius: 18px; border-bottom-left-radius: 4px; }
+        .typing-dots span { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: typing 1.4s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-10px); } }
+        .chat-input-container { padding: 15px 20px; background: rgba(20, 20, 30, 0.8); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .chat-input-wrapper { display: flex; gap: 10px; align-items: center; }
+        #userInput { flex: 1; padding: 15px 20px; border: 2px solid rgba(102, 126, 234, 0.3); border-radius: 25px; background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 15px; outline: none; transition: all 0.3s; }
+        #userInput:focus { border-color: #667eea; background: rgba(255, 255, 255, 0.08); }
+        #userInput::placeholder { color: rgba(255, 255, 255, 0.5); }
+        #sendBtn { padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 25px; color: white; font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 15px; }
+        #sendBtn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        .action-buttons { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .action-btn { padding: 8px 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px; color: white; font-size: 12px; cursor: pointer; transition: all 0.3s; }
+        .action-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: rgba(30, 30, 46, 0.98); padding: 30px; border-radius: 20px; max-width: 500px; width: 100%; border: 1px solid rgba(255, 255, 255, 0.2); max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 20px; }
+        .close-btn { background: none; border: none; color: white; font-size: 28px; cursor: pointer; padding: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 14px; opacity: 0.9; }
+        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border: 2px solid rgba(102, 126, 234, 0.3); border-radius: 10px; background: rgba(255, 255, 255, 0.05); color: #fff; font-size: 14px; outline: none; }
+        .input-group select option { background: #1e1e2e; color: #fff; }
+        .save-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer; font-size: 15px; margin-top: 10px; }
+        @media (max-width: 768px) { .chat-container { height: 100vh; border-radius: 0; } .message-content { max-width: 80%; } }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 AI Chatbot Pro</h1>
+            <div class="ai-selector">
+                <div class="ai-option active" data-ai="agentrouter">🚀 Agent Router</div>
+                <div class="ai-option" data-ai="claude">🧠 Claude AI</div>
+                <div class="ai-option" data-ai="gpt">💬 ChatGPT</div>
+                <div class="ai-option" data-ai="gemini">✨ Gemini</div>
+            </div>
+            <div class="status"><span class="status-dot"></span><span id="statusText">Siap dengan Agent Router</span></div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="avatar bot">🤖</div>
+                <div><div class="ai-badge">Agent Router</div><div class="message-content">Halo! Saya chatbot dengan AI canggih. Saat ini menggunakan <strong>Agent Router (Gratis)</strong> dengan Claude Sonnet 4.5. Masukkan API key di Settings untuk mulai!</div></div>
+            </div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator"><div class="avatar bot">🤖</div><div class="typing-dots"><span></span><span></span><span></span></div></div>
+        <div class="chat-input-container">
+            <div class="chat-input-wrapper"><input type="text" id="userInput" placeholder="Ketik pesan Anda di sini..." autocomplete="off"><button id="sendBtn">Kirim</button></div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="loadHistory()">📜 Muat Riwayat</button>
+                <button class="action-btn" onclick="openSettings()">⚙️ Setting API</button>
+                <button class="action-btn" onclick="clearChat()">🗑️ Hapus Chat</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>⚙️ Pengaturan API</h2><button class="close-btn" onclick="closeSettings()">&times;</button></div>
+            <div class="input-group"><label>🔑 Agent Router API Key</label><input type="text" id="agentRouterKey" placeholder="sk-uJbb..."><small style="opacity:0.7;font-size:12px;display:block;margin-top:5px">Dari Agent Router Console</small></div>
+            <div class="input-group"><label>⭐ Claude API Key</label><input type="text" id="claudeApiKey" placeholder="sk-ant-api03-..."></div>
+            <div class="input-group"><label>🧠 Pilih Model Claude</label><select id="claudeModel"><option value="claude-sonnet-4-5-20250929" selected>Claude Sonnet 4.5 ⭐</option><option value="claude-opus-4-20250514">Claude Opus 4</option><option value="claude-sonnet-4-20250514">Claude Sonnet 4</option><option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option></select></div>
+            <div class="input-group"><label>💬 ChatGPT API Key</label><input type="text" id="gptApiKey" placeholder="sk-proj-..."></div>
+            <div class="input-group"><label>🤖 Model GPT</label><select id="gptModel"><option value="gpt-4o">GPT-4o</option><option value="gpt-4o-mini" selected>GPT-4o Mini</option></select></div>
+            <div class="input-group"><label>✨ Gemini API Key</label><input type="text" id="geminiApiKey" placeholder="AIza..."></div>
+            <div class="input-group"><label>💎 Model Gemini</label><select id="geminiModel"><option value="gemini-2.0-flash-exp">Gemini 2.0 Flash</option><option value="gemini-1.5-pro" selected>Gemini 1.5 Pro</option></select></div>
+            <div class="input-group"><label>🗄️ Supabase URL</label><input type="text" id="supabaseUrl" placeholder="https://xxx.supabase.co"></div>
+            <div class="input-group"><label>🔐 Supabase Anon Key</label><input type="text" id="supabaseKey" placeholder="eyJhbG..."></div>
+            <button class="save-btn" onclick="saveSettings()">💾 Simpan Pengaturan</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+let supabase=null,currentAI='agentrouter',settings={agentRouterKey:'',claudeApiKey:'',claudeModel:'claude-sonnet-4-5-20250929',gptApiKey:'',gptModel:'gpt-4o-mini',geminiApiKey:'',geminiModel:'gemini-1.5-pro',supabaseUrl:'',supabaseKey:''};function loadSettings(){const e=localStorage.getItem('chatbotSettings');e&&(settings=JSON.parse(e),settings.supabaseUrl&&settings.supabaseKey&&(supabase=window.supabase.createClient(settings.supabaseUrl,settings.supabaseKey)))}loadSettings();const chatMessages=document.getElementById('chatMessages'),userInput=document.getElementById('userInput'),sendBtn=document.getElementById('sendBtn'),typingIndicator=document.getElementById('typingIndicator'),statusText=document.getElementById('statusText');document.querySelectorAll('.ai-option').forEach(e=>{e.addEventListener('click',function(){document.querySelectorAll('.ai-option').forEach(e=>e.classList.remove('active')),this.classList.add('active'),currentAI=this.dataset.ai,'agentrouter'===currentAI?statusText.textContent='🚀 Agent Router':'claude'===currentAI?statusText.textContent='🧠 Claude AI':'gpt'===currentAI?statusText.textContent='💬 ChatGPT':'gemini'===currentAI&&(statusText.textContent='✨ Gemini')})});function formatTime(){return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}function addMessage(e,t,a=''){const s=document.createElement('div');s.className=`message ${t?'user':'bot'}`;const n=document.createElement('div');n.className=`avatar ${t?'user':'bot'}`,n.textContent=t?'👤':'🤖';const i=document.createElement('div');if(!t&&a){const e=document.createElement('div');e.className='ai-badge',e.textContent=a,i.appendChild(e)}const o=document.createElement('div');o.className='message-content',o.textContent=e;const d=document.createElement('div');d.className='timestamp',d.textContent=formatTime(),i.appendChild(o),i.appendChild(d),s.appendChild(n),s.appendChild(i),chatMessages.appendChild(s),chatMessages.scrollTop=chatMessages.scrollHeight}async function callAgentRouter(e){try{const t=settings.agentRouterKey||'MASUKKAN_API_KEY_DI_SETTINGS',a=await fetch('https://api.agentrouter.org/v1/messages',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-5-20250929',max_tokens:4096,messages:[{role:'user',content:e}]})});if(!a.ok){const e=await a.json();return console.error('API Error:',e),`Error ${a.status}: ${e.error?.message||'Periksa API key di Settings'}`}const s=await a.json();return console.log('Response:',s),s.content&&s.content[0]&&s.content[0].text?s.content[0].text:'Format respons tidak sesuai'}catch(e){return console.error('Error:',e),'Terjadi kesalahan. Pastikan API key sudah benar di Settings'}}async function callClaude(e){if(!settings.claudeApiKey)return'Masukkan Claude API key di Settings!';try{const t=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':settings.claudeApiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:settings.claudeModel,max_tokens:4096,messages:[{role:'user',content:e}]})});const a=await t.json();return a.error?`Error: ${a.error.message}`:a.content[0].text}catch(e){return console.error(e),'Gagal terhubung ke Claude API'}}async function callGPT(e){if(!settings.gptApiKey)return'Masukkan ChatGPT API key di Settings!';try{const t=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${settings.gptApiKey}`},body:JSON.stringify({model:settings.gptModel,messages:[{role:'user',content:e}]})});const a=await t.json();return a.error?`Error: ${a.error.message}`:a.choices[0].message.content}catch(e){return console.error(e),'Gagal terhubung ke ChatGPT API'}}async function callGemini(e){if(!settings.geminiApiKey)return'Masukkan Gemini API key di Settings!';try{const t=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${settings.geminiModel}:generateContent?key=${settings.geminiApiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:e}]}]})});const a=await t.json();return a.error?`Error: ${a.error.message}`:a.candidates[0].content.parts[0].text}catch(e){return console.error(e),'Gagal terhubung ke Gemini API'}}async function saveToSupabase(e,t,a){if(!supabase)return;try{const{error:s}=await supabase.from('chat_history').insert([{user_message:e,bot_response:t,ai_model:a}]);s?console.error('Supabase error:',s):(statusText.textContent='✅ Tersimpan',setTimeout(()=>{'agentrouter'===currentAI?statusText.textContent='🚀 Agent Router':'claude'===currentAI?statusText.textContent='🧠 Claude AI':'gpt'===currentAI?statusText.textContent='💬 ChatGPT':'gemini'===currentAI&&(statusText.textContent='✨ Gemini')},2e3))}catch(e){console.error(e)}}async function loadHistory(){if(!supabase)return void alert('Setup Supabase di pengaturan dahulu!');try{statusText.textContent='📥 Memuat...';const{data:e,error:t}=await supabase.from('chat_history').select('*').order('created_at',{ascending:!0}).limit(100);if(t)throw t;chatMessages.innerHTML='',0===e.length?addMessage('Belum ada riwayat chat.', false,'System'):e.forEach(e=>{addMessage(e.user_message,!0),addMessage(e.bot_response,!1,e.ai_model||'AI')}),statusText.textContent=`✅ ${e.length} pesan`,setTimeout(()=>{'agentrouter'===currentAI?statusText.textContent='🚀 Agent Router':'claude'===currentAI?statusText.textContent='🧠 Claude AI':'gpt'===currentAI?statusText.textContent='💬 ChatGPT':'gemini'===currentAI&&(statusText.textContent='✨ Gemini')},2e3)}catch(e){alert('Error: '+e.message)}}function clearChat(){confirm('Hapus semua chat?')&&(chatMessages.innerHTML='',addMessage('Chat dibersihkan',!1,'System'))}function openSettings(){document.getElementById('settingsModal').classList.add('active'),document.getElementById('agentRouterKey').value=settings.agentRouterKey,document.getElementById('claudeApiKey').value=settings.claudeApiKey,document.getElementById('claudeModel').value=settings.claudeModel,document.getElementById('gptApiKey').value=settings.gptApiKey,document.getElementById('gptModel').value=settings.gptModel,document.getElementById('geminiApiKey').value=settings.geminiApiKey,document.getElementById('geminiModel').value=settings.geminiModel,document.getElementById('supabaseUrl').value=settings.supabaseUrl,document.getElementById('supabaseKey').value=settings.supabaseKey}function closeSettings(){document.getElementById('settingsModal').classList.remove('active')}function saveSettings(){settings.agentRouterKey=document.getElementById('agentRouterKey').value,settings.claudeApiKey=document.getElementById('claudeApiKey').value,settings.claudeModel=document.getElementById('claudeModel').value,settings.gptApiKey=document.getElementById('gptApiKey').value,settings.gptModel=document.getElementById('gptModel').value,settings.geminiApiKey=document.getElementById('geminiApiKey').value,settings.geminiModel=document.getElementById('geminiModel').value,settings.supabaseUrl=document.getElementById('supabaseUrl').value,settings.supabaseKey=document.getElementById('supabaseKey').value,localStorage.setItem('chatbotSettings',JSON.stringify(settings)),settings.supabaseUrl&&settings.supabaseKey&&(supabase=window.supabase.createClient(settings.supabaseUrl,settings.supabaseKey)),alert('✅ Pengaturan disimpan!'),closeSettings()}async function sendMessage(){const e=userInput.value.trim();if(''===e)return;addMessage(e,!0),userInput.value='',typingIndicator.classList.add('active');let t,a;'agentrouter'===currentAI?(t=await callAgentRouter(e),a='Agent Router'):'claude'===currentAI?(t=await callClaude(e),a=`Claude ${settings.claudeModel.includes('opus')?'Opus':settings.claudeModel.includes('sonnet')?'Sonnet':'Haiku'}`):'gpt'===currentAI?(t=await callGPT(e),a=`GPT ${settings.gptModel.toUpperCase()}`):'gemini'===currentAI&&(t=await callGemini(e),a=`Gemini ${settings.geminiModel.includes('2.0')?'2.0':'1.5'}`),typingIndicator.classList.remove('active'),addMessage(t,!1,a),await saveToSupabase(e,t,a)}sendBtn.addEventListener('click',sendMessage),userInput.addEventListener('keypress',e=>{'Enter'===e.key&&sendMessage()});
+    </script>
+</body>
+</html>
